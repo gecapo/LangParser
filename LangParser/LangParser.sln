@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2043
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LangParser", "LangParser\LangParser.csproj", "{D4872B88-7FF6-41D8-B1A9-1076524605C1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LangParser.Grammar", "LangParser.Grammar\LangParser.Grammar.csproj", "{1240A30D-9160-4B39-A845-E2A1A3505A05}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D4872B88-7FF6-41D8-B1A9-1076524605C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4872B88-7FF6-41D8-B1A9-1076524605C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4872B88-7FF6-41D8-B1A9-1076524605C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4872B88-7FF6-41D8-B1A9-1076524605C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1240A30D-9160-4B39-A845-E2A1A3505A05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1240A30D-9160-4B39-A845-E2A1A3505A05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1240A30D-9160-4B39-A845-E2A1A3505A05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1240A30D-9160-4B39-A845-E2A1A3505A05}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {22919618-5AFA-40D7-AAAE-5FBC62E16CB7}
+	EndGlobalSection
+EndGlobal
