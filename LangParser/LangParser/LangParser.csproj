@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LangParser.Grammar\LangParser.Grammar.csproj" />
+    <PackageReference Include="Sprache" Version="2.1.2" />
   </ItemGroup>
 
 </Project>
