@@ -1,331 +1,323 @@
 using Sprache;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Linq;
+using System.Linq.Expressions;
+using Microsoft.VisualBasic.CompilerServices;
 
-class Program
+namespace Parser
+{
+    class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            //string test = "when Activity.Subject contains snippet 'Fund.Name'";
-           // string test1 = "when Activity with Subject contains snippet 'Quarter / Year'";
-           // string test2 = "for Activity with Subject contains ‘Emerging’ OR Subject contains ‘Smith’ do set body = 'test'";
-           // string test3 = "Do set Activity body = 'sekunda'";
-           // string test4 = "For Activity with Subject contains all words 'tedsastsds'";
-           // string test5 = "For Activity with Subject is 'tedsastsds' and Body contains all words 'SEs'";
-            string test6 = "For Activity with Subject is 'tedsastsds' and Body contains all words 'SEs' and Date contains exact phrase 'MART' OR BODY = 'GEORGI' and GOGO EQUALS 'EBE MAIKI'";
+            string input = "for Activity";
+            var a = Grammar.Trigger.Parse(input);
 
-            string testH0i = @"when Investor Account.Subject starts   
-                                                                with snippet 'Fund.Name'";
-
-           //var qutedtext = Grammar.CommandDispacher.Parse(test);
-           //var qutedtext1 = Grammar.CommandDispacher.Parse(test1);
-           //var qutedtext2 = Grammar.CommandDispacher.Parse(test2);
-           //var qutedtext3 = Grammar.CommandDispacher.Parse(test3);
-           //var qutedtext4 = Grammar.CommandDispacher.Parse(test4);
-           //var qutedtext5 = Grammar.CommandDispacher.Parse(test5);
-            var qutedtext6 = Grammar.CommandDispacher.Parse(test6);
             ;
-
         }
     }
+    
     public static class Grammar
     {
-            public static readonly Parser<string> StartsWith =
-                from startsLiteral in Parse.IgnoreCase("STARTS").Token()
-                from withLiteral in Parse.IgnoreCase("WITH").Token()
-                select "Starts With"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        #region Operators
+        //DEFINE OPERATORS
+        private static readonly Parser<Operators> StartsWith =
+            from startsLiteral in Parse.IgnoreCase("STARTS").Token()
+            from withLiteral in Parse.IgnoreCase("WITH").Token()
+            select Operators.starts_with;
 
-            public static readonly Parser<string> EndsWith =
-                from endsLiteral in Parse.IgnoreCase("ENDS").Token()
-                from withLiteral in Parse.IgnoreCase("WITH").Token()
-                select "Ends With"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> EndsWith =
+            from endsLiteral in Parse.IgnoreCase("ENDS").Token()
+            from withLiteral in Parse.IgnoreCase("WITH").Token()
+            select Operators.ends_with;
 
-            public static readonly Parser<string> Equal =
-                from equalsLiteral in Parse.IgnoreCase("EQUALS").Token()
-                select "Equals"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> Equal =
+            from equalsLiteral in Parse.IgnoreCase("EQUALS").Token()
+            select Operators.@is;
 
-            public static readonly Parser<string> EqualsSign =
-                from equalsLiteral in Parse.IgnoreCase("=").Token()
-                select "="; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> EqualsSign =
+            from equalsLiteral in Parse.IgnoreCase("=").Token()
+            select Operators.@is;
 
-           public static readonly Parser<string> IsNotSign =
-                from isNotLiteral in Parse.IgnoreCase("!=").Token()
-                select "!="; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> IsNotSign =
+            from isNotLiteral in Parse.IgnoreCase("!=").Token()
+            select Operators.not_is;
 
-            public static readonly Parser<string> EqualOrMore =
-                from literal in Parse.IgnoreCase(">=").Token()
-                select ">="; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> EqualOrMore =
+            from literal in Parse.IgnoreCase(">=").Token()
+            select Operators.greater_than_or_equal;
 
-            public static readonly Parser<string> More =
-                from literal in Parse.IgnoreCase(">").Token()
-                select ">"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> More =
+            from literal in Parse.IgnoreCase(">").Token()
+            select Operators.greater_than;
 
-            public static readonly Parser<string> EqualOrLess =
-                from literal in Parse.IgnoreCase("<=").Token()
-                select "<="; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> EqualOrLess =
+            from literal in Parse.IgnoreCase("<=").Token()
+            select Operators.less_than_or_equal;
 
-            public static readonly Parser<string> Less =
-                from literal in Parse.IgnoreCase("<").Token()
-                select "<"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> Less =
+            from literal in Parse.IgnoreCase("<").Token()
+            select Operators.less_than;
 
-            public static readonly Parser<string> Plus =
-                from literal in Parse.IgnoreCase("+").Token()
-                select "+"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
-            
-            public static readonly Parser<string> Minus =
-                from literal in Parse.IgnoreCase("-").Token()
-                select "-"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> Plus =
+            from literal in Parse.IgnoreCase("+").Token()
+            select Operators.plus;
 
-            public static readonly Parser<string> Contains =
-                from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
-                select "Contains"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> Minus =
+            from literal in Parse.IgnoreCase("-").Token()
+            select Operators.minus;
 
-            public static readonly Parser<string> Is =
-                from literal in Parse.IgnoreCase("IS").Token()
-                select "Is"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> Contains =
+            from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
+            select Operators.contains;
 
-            public static readonly Parser<string> Max =
-                from literal in Parse.IgnoreCase("MAX").Token()
-                select "Max"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> Is =
+            from literal in Parse.IgnoreCase("IS").Token()
+            select Operators.@is;
 
-            public static readonly Parser<string> Sin =
-                from literal in Parse.IgnoreCase("SIN").Token()
-                select "Sin"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> Max =
+            from literal in Parse.IgnoreCase("MAX").Token()
+            select Operators.max;
 
-            public static readonly Parser<string> ContainsSnippet =
-                from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
-                from snippetLiteral in Parse.IgnoreCase("SNIPPET").Token()
-                select "Contains Snippet"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> Sin =
+            from literal in Parse.IgnoreCase("SIN").Token()
+            select Operators.sin;
 
-            public static readonly Parser<string> ContainsExactPhrase =
-                from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
-                from exactLiteral in Parse.IgnoreCase("EXACT").Token()
-                from phraseLiteral in Parse.IgnoreCase("PHRASE").Token()
-                select "Contains exact phrase"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> ContainsSnippet =
+            from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
+            from snippetLiteral in Parse.IgnoreCase("SNIPPET").Token()
+            select Operators.contains_snippet;
 
-            public static readonly Parser<string> ContainsAllWords =
-                from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
-                from allLiteral in Parse.IgnoreCase("ALL").Token()
-                from wordsLiteral in Parse.IgnoreCase("WORDS").Token()
-                select "Contains all words"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> ContainsExactPhrase =
+            from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
+            from exactLiteral in Parse.IgnoreCase("EXACT").Token()
+            from phraseLiteral in Parse.IgnoreCase("PHRASE").Token()
+            select Operators.contains_exact_phrase;
 
-            public static readonly Parser<string> ContainsAlias =
-                from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
-                from aliasLiteral in Parse.IgnoreCase("ALIAS").Token()
-                select "Contains alias"; //TODO MAKE IT RETURN CLASS OPERATOR OR SMTH
+        private static readonly Parser<Operators> ContainsAllWords =
+            from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
+            from allLiteral in Parse.IgnoreCase("ALL").Token()
+            from wordsLiteral in Parse.IgnoreCase("WORDS").Token()
+            select Operators.all;
 
-            //REGISTER OPERATORS
-            public static readonly Parser<string> Operator =
-                     StartsWith
-                    .Or(EndsWith)
-                    .Or(Equal)
-                    .Or(EqualsSign)
-                    .Or(IsNotSign)
-                    .Or(EqualOrMore)
-                    .Or(More)
-                    .Or(EqualOrLess)
-                    .Or(Less)
-                    .Or(Plus)
-                    .Or(Minus)
-                    .Or(Max)
-                    .Or(Sin)
-                    .Or(Is)
-                    .Or(Contains)
-                    .Or(ContainsSnippet)
-                    .Or(ContainsExactPhrase)
-                    .Or(ContainsAllWords)
-                    .Or(ContainsAlias);
+        private static readonly Parser<Operators> ContainsAlias =
+            from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
+            from aliasLiteral in Parse.IgnoreCase("ALIAS").Token()
+            select Operators.contains_alias;
 
-        //REGISTER SEPARATORS
-        private static readonly Parser<IOption<IEnumerable<char>>> Separator = Parse.IgnoreCase(GrammarDictionary.Separator.SEPARATOR_OR)
-            .Or(Parse.IgnoreCase(GrammarDictionary.Separator.SEPARATOR_AND)).Optional();
+        //REGISTER OPERATORS
+        private static readonly Parser<Operators> Operator =
+                 StartsWith
+                .Or(EndsWith)
+                .Or(Equal)
+                .Or(EqualsSign)
+                .Or(IsNotSign)
+                .Or(EqualOrMore)
+                .Or(More)
+                .Or(EqualOrLess)
+                .Or(Less)
+                .Or(Plus)
+                .Or(Minus)
+                .Or(Max)
+                .Or(Sin)
+                .Or(Is)
+                .Or(ContainsAlias)
+                .Or(ContainsSnippet)
+                .Or(ContainsExactPhrase)
+                .Or(ContainsAllWords)
+                .Or(Contains);
+        #endregion
 
-        private static readonly Parser<char> SeparatorChar = Parse.Chars("\\\"= .\'");
-        private static readonly Parser<char> ControlChar = Parse.Char(Char.IsControl, "Control character");
+        #region  BinaryOperators
+        //DEFINE BinaryOperators
+        private static readonly Parser<Operators> OrOperator =
+            from equalsLiteral in Parse.IgnoreCase("OR").Token()
+            select Operators.or;
 
-        //REGISTER MODIFIERS
-        private static readonly Parser<string> Modifier = Parse.IgnoreCase(GrammarDictionary.MOD_WITH)
-            .Or(Parse.String(GrammarDictionary.MOD_DOT)).Text();
+        private static readonly Parser<Operators> AndOperator =
+            from equalsLiteral in Parse.IgnoreCase("AND").Token()
+            select Operators.and;
 
-        //COMMAND DISPACHER
-        public static Parser<GrammarDictionary.Command> CommandChoserParser =
-            Parse.IgnoreCase(GrammarDictionary.Initializers.FOR_COMMAND).Token()
-                .Return(GrammarDictionary.Command.Trigger)
-            .Or(Parse.IgnoreCase(GrammarDictionary.Initializers.WHEN_COMMAND).Token()
-                        .Return(GrammarDictionary.Command.Trigger))
-            .Or(Parse.IgnoreCase(GrammarDictionary.Initializers.DO_COMMAND).Token()
-                    .Return(GrammarDictionary.Command.Subject));
+        //REGISTER BinaryOperators
+        private static readonly Parser<Operators> LogicalOperators = OrOperator.Or(AndOperator);
+        #endregion
 
+        private static readonly Parser<string> With =
+            from withLiteral in Parse.IgnoreCase("WITH").Token()
+            select "with";
 
-        public static Parser<ICommand> CommandDispacher =
-            from cmd in CommandChoserParser
-            from value in Parse.AnyChar.AtLeastOnce().Text()
-            select CommandDispacherParser(cmd, value);
+        private static readonly Parser<string> When =
+            from withLiteral in Parse.IgnoreCase("WHEN").Token()
+            select "when";
 
-        public static ICommand CommandDispacherParser(GrammarDictionary.Command cmd, string value)
-        {
-            switch (cmd)
-            {
-                case GrammarDictionary.Command.Trigger:
-                    return new TriggerCommand(Grammar.Entity.Parse(value));
-                case GrammarDictionary.Command.Subject:
-                    return new SubjectCommand(value);
-                default:
-                    throw new Exception("Invalid Command");
-            };
-        }
+        private static readonly Parser<string> For =
+            from withLiteral in Parse.IgnoreCase("For").Token()
+            select "For";
 
-        //OTHER
-        private static readonly Parser<char> TokenChar = Parse.AnyChar.Except(SeparatorChar).Except(ControlChar);
-        private static readonly Parser<string> Token = TokenChar.AtLeastOnce().Text();
+        private static readonly Parser<string> Starters = With.Or(When).Or(For);
 
         private static readonly Parser<char> DoubleQuote = Parse.Char((char)39);
-        private static readonly Parser<char> QdText = Parse.AnyChar.Except(DoubleQuote);
+        private static readonly Parser<char> QuotedText = Parse.AnyChar.Except(DoubleQuote);
 
-
-        private static readonly Parser<string> QuotedString =
+        private static readonly Parser<Expression> Constant =
             from open in DoubleQuote
-            from text in QdText.Many().Text()
+            from text in QuotedText.Many().Text()
             from close in DoubleQuote
-            select text;
+            select new ConststantExpression
+            {
+                Value = text
+            };
 
-        public static readonly Parser<Property> Property =
-            from name in Token
-            from fws in Parse.WhiteSpace
-            from _ in Operator
-            from sws in Parse.WhiteSpace
-            from value in QuotedString
-            select new Property(name, _, value);
+        private static readonly Parser<Expression> Integer =
+            from open in Parse.Number
+            select new ConststantExpression
+            {
+                Value = open
+            };
 
-        public static readonly Parser<Property> ListProperty =
-            from and in Separator
-            from a in Property
-            select a;
+        public static readonly Parser<Expression> Target =
+            from entityName in Parse.Identifier(Parse.Letter, Parse.LetterOrDigit) //Parse.AnyChar.Except(Parse.Char('.').Or(Parse.WhiteSpace)).AtLeastOnce().Text()
+            from dot in Parse.String(".").Or(Parse.IgnoreCase("with")).Token().Optional()
+            from propertyName in Parse.Identifier(Parse.Letter, Parse.LetterOrDigit).Optional()//Parse.AnyChar.Except(Parse.Char('.').Or(Parse.WhiteSpace)).AtLeastOnce().Text().Optional()
+            select new Target
+            {
+                EntityName = propertyName.IsEmpty ? null : entityName,
+                PropertyName = propertyName.IsEmpty ? entityName : propertyName.Get()
+            };
 
-        public static readonly Parser<Entity> Entity =
-            from name in Token
-            from fws in Parse.WhiteSpace.Optional()
-            from mood in Modifier
-            from sws in Parse.WhiteSpace.Optional()
-            from value in ListProperty.Many()
-            select new Entity(name, value);
 
-        public static readonly Parser<string> SubjectCommand = Parse.IgnoreCase(GrammarDictionary.SubjectCommand.SET)
-            .Or(Parse.IgnoreCase(GrammarDictionary.SubjectCommand.DELETE))
-            .Or(Parse.IgnoreCase(GrammarDictionary.SubjectCommand.RELATE)).Text();
+        private static readonly Parser<Expression> Binary =
+            (from left in Target
+             from op in Operator
+             from right in Constant.Or(Integer)
+             select new BinaryExpression()
+             {
+                 @operator = op,
+                 Left = left,
+                 Right = right
+             }).Contained(Parse.Char('('), Parse.Char(')')).Token()
+           .Or(from left in Target
+               from op in Operator
+               from right in Constant.Or(Integer)
+               select new BinaryExpression()
+               {
+                   @operator = op,
+                   Left = left,
+                   Right = right
+               });
+
+        private static readonly Parser<Expression> LogicalExpression =
+            (from left in Binary.Or(Parse.Ref(() => LogicalExpression))
+             from @operator in LogicalOperators
+             from right in Binary.Or(Parse.Ref(() => LogicalExpression))
+             select new BinaryExpression
+             {
+                 @operator = @operator,
+                 Left = left,
+                 Right = right
+             }).Contained(Parse.Char('('), Parse.Char(')')).Token()
+            .Or(from left in Binary.Or(Parse.Ref(() => LogicalExpression))
+                from @operator in LogicalOperators
+                from right in Binary.Or(Parse.Ref(() => LogicalExpression))
+                select new BinaryExpression
+                {
+                    @operator = @operator,
+                    Left = left,
+                    Right = right
+                });
+
+
+        private static readonly Parser<Expression> Expression = Target.Or(LogicalExpression.Or(Binary));
+
+        private static Expression ParseExpression(string expression)
+        {
+            if (expression.StartsWith('(') && expression.EndsWith(')') || expression.Trim().Split(' ').Length == 1)
+            {
+                return Expression.Parse(expression);
+            }
+            return Expression.Parse(string.Format("({0})", expression));
+        }
+
+        public static readonly Parser<Expression> Trigger =
+            from start in Starters
+            from exp in Parse.AnyChar.AtLeastOnce().Text()
+            select ParseExpression(exp);
+
+
+        //public static readonly Parser<Expression> Command
+
     }
-
-    public static class GrammarDictionary
+    
+    public class Target : Expression
     {
+        public string EntityName { get; set; }
+        public string PropertyName { get; set; }
 
-        public static string MOD_WITH = "WITH";
-        public static string MOD_DOT = ".";
-        public static string MOD_NOT = "NOT"; //TODO
-
-        public static class Initializers
+        public override string ToString()
         {
-            public static string FOR_COMMAND = "FOR";
-            public static string DO_COMMAND = "DO";
-            public static string WHEN_COMMAND = "WHEN";
+            return $"{EntityName} {PropertyName}";
         }
-
-        public enum Command
-        {
-            Trigger,
-            Subject
-        }
-
-
-        public static class SubjectCommand
-        {
-            public static string SET = "SET";
-            public static string DELETE = "DELETE";
-            public static string RELATE = "RELATE TO";
-        }
-
-
-        public static class Separator
-        {
-            public static string SEPARATOR_OR = " OR ";
-            public static string SEPARATOR_AND = " AND ";
-        }
-
     }
 
-
-    public class Entity : Item
+    public class ConststantExpression : Expression
     {
-        public Entity(string name, IEnumerable<Property> value)
-        {
-            Name = name;
-            Properties = value;
-        }
+        public string Value { get; set; }
 
-        public string Name { get; set; }
-        public IEnumerable<Property> Properties { get; set; }
+        public override string ToString()
+        {
+            return Value;
+        }
     }
 
-
-    public class Property : Item
+    public class BinaryExpression : Expression
     {
-        public Property(string name, string @operator, string value)
-        {
-            Name = name;
-            Value = value;
-            @Operator = @operator;
-        }
+        public Expression Left { get; set; }
+        public Operators @operator { get; set; }
+        public Expression Right { get; set; }
 
-        public string Name { get; }
-        public string Operator { get; }
-        public string Value { get; }
+
+        public override string ToString()
+        {
+            return $"{Left} {@operator} {Right}";
+        }
     }
 
-    public interface Item
+    public abstract class Expression
     {
-
     }
 
-    public class TriggerCommand : ICommand
+    public enum Operators
     {
-        public TriggerCommand()
-        {
+        //Bi
+        all,
+        contains,
+        starts_with,
+        greater_than,
+        greater_than_or_equal,
+        @is,
+        not_is,
+        less_than,
+        less_than_or_equal,
+        not_contains,
+        @in,
+        EqualToProp,
+        NotEqualToProp,
 
-        }
-        public TriggerCommand(Entity en)
-        {
-            TriggerEntity = en;
-        }
-        public Entity TriggerEntity { get; set; }
+        //TODO NOT SURE IF CONTAINED
+        ends_with,
+        plus,
+        minus,
+        max,
+        sin,
+        contains_exact_phrase,
+        contains_snippet,
+        contains_alias,
 
-
-        public string Execute()
-        {
-            return "SITE.SELECT {ENTITY}";
-        }
+        //LOGICAL OPERATORS
+        and,
+        or
     }
+}
 
-    public class SubjectCommand : ICommand
-    {
-        //MAJOR TODO
-        public SubjectCommand()
-        {
-
-        }
-        public SubjectCommand(string en)
-        {
-            TriggerEntity = en;
-        }
-        public string TriggerEntity { get; set; }
-
-
-        public string Execute()
-        {
-            return "SITE.SELECT {ENTITY}";
-        }
-    }
-
-
-    public interface ICommand
-    {
-        string Execute();
-    }
