@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27428.2043
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LangParser", "LangParser\LangParser.csproj", "{D4872B88-7FF6-41D8-B1A9-1076524605C1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XUnitTestProject1", "XUnitTestProject1\XUnitTestProject1.csproj", "{C0BB3EF2-517B-4490-865C-F26E31041CD2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LangParser.Tests", "XUnitTestProject1\LangParser.Tests.csproj", "{C0BB3EF2-517B-4490-865C-F26E31041CD2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
