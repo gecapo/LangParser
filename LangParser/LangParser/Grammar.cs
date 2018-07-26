@@ -1,18 +1,10 @@
+using System.Collections.Generic;
+using System.Linq;
+using D6S.Tool.RulesV2.LanguageParser.Models;
 using Sprache;
 
-namespace LangParser
+namespace D6S.Tool.RulesV2.LanguageParser
 {
-    class Program
-    {
-        public static void Main(string[] args)
-        {
-            string input = "for Activity";
-            var a = Grammar.Trigger.Parse(input);
-
-            ;
-        }
-    }
-    
     public static class Grammar
     {
         #region Operators
@@ -55,13 +47,14 @@ namespace LangParser
             from literal in Parse.IgnoreCase("<").Token()
             select Operators.less_than;
 
-        private static readonly Parser<Operators> Plus =
-            from literal in Parse.IgnoreCase("+").Token()
-            select Operators.plus;
+        private static readonly Parser<Operators> DoubleEqual =
+            from literal in Parse.IgnoreCase("==").Token()
+            select Operators.@is;
 
-        private static readonly Parser<Operators> Minus =
-            from literal in Parse.IgnoreCase("-").Token()
-            select Operators.minus;
+        private static readonly Parser<Operators> IsEmpty =
+            from literal in Parse.IgnoreCase("IS").Token()
+            from snippetLiteral in Parse.IgnoreCase("EMPTY").Token()
+            select Operators.@is;
 
         private static readonly Parser<Operators> Contains =
             from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
@@ -71,13 +64,11 @@ namespace LangParser
             from literal in Parse.IgnoreCase("IS").Token()
             select Operators.@is;
 
-        private static readonly Parser<Operators> Max =
-            from literal in Parse.IgnoreCase("MAX").Token()
-            select Operators.max;
-
-        private static readonly Parser<Operators> Sin =
-            from literal in Parse.IgnoreCase("SIN").Token()
-            select Operators.sin;
+        private static readonly Parser<Operators> DoesNotContain =
+            from containsLiteral in Parse.IgnoreCase("DOES").Token()
+            from aliasLiteral in Parse.IgnoreCase("NOT").Token()
+            from phraseLiteral in Parse.IgnoreCase("CONTAIN").Token()
+            select Operators.not_contains;
 
         private static readonly Parser<Operators> ContainsSnippet =
             from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
@@ -88,7 +79,7 @@ namespace LangParser
             from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
             from exactLiteral in Parse.IgnoreCase("EXACT").Token()
             from phraseLiteral in Parse.IgnoreCase("PHRASE").Token()
-            select Operators.contains_exact_phrase;
+            select Operators.contains_only;
 
         private static readonly Parser<Operators> ContainsAllWords =
             from containsLiteral in Parse.IgnoreCase("CONTAINS").Token()
@@ -112,11 +103,10 @@ namespace LangParser
                 .Or(More)
                 .Or(EqualOrLess)
                 .Or(Less)
-                .Or(Plus)
-                .Or(Minus)
-                .Or(Max)
-                .Or(Sin)
+                .Or(DoubleEqual)
+                .Or(IsEmpty)
                 .Or(Is)
+                .Or(DoesNotContain)
                 .Or(ContainsAlias)
                 .Or(ContainsSnippet)
                 .Or(ContainsExactPhrase)
@@ -124,7 +114,7 @@ namespace LangParser
                 .Or(Contains);
         #endregion
 
-        #region  BinaryOperators
+        #region  LogicOperators
         //DEFINE BinaryOperators
         private static readonly Parser<Operators> OrOperator =
             from equalsLiteral in Parse.IgnoreCase("OR").Token()
@@ -138,6 +128,7 @@ namespace LangParser
         private static readonly Parser<Operators> LogicalOperators = OrOperator.Or(AndOperator);
         #endregion
 
+        #region StarterKeywords
         private static readonly Parser<string> With =
             from withLiteral in Parse.IgnoreCase("WITH").Token()
             select "with";
@@ -152,6 +143,50 @@ namespace LangParser
 
         private static readonly Parser<string> Starters = With.Or(When).Or(For);
 
+        #endregion
+
+        #region ActionStartKeywords
+        private static readonly Parser<string> Do =
+            from start in Parse.IgnoreCase("DO").Token()
+            select "DO";
+
+        private static readonly Parser<string> AlwaysDo =
+            from start in Parse.IgnoreCase("ALWAYS").Token()
+            from doKeyword in Parse.IgnoreCase("DO").Token()
+            select "Always do";
+
+        private static readonly Parser<string> ActionStartKeyWord = AlwaysDo.Or(Do);
+        #endregion
+
+        #region Commands
+        private static readonly Parser<Command> Set =
+            from start in Parse.IgnoreCase("SET").Token()
+            select Command.Set;
+
+        private static readonly Parser<Command> Delete =
+            from start in Parse.IgnoreCase("Delete").Token()
+            select Command.Delete;
+
+        private static readonly Parser<Command> RelateThe =
+            from start in Parse.IgnoreCase("RELATE").Token()
+            from doKeyword in Parse.IgnoreCase("THE").Token()
+            select Command.ReleteThe;
+
+        private static readonly Parser<Command> CommandAction = RelateThe.Or(Set).Or(Delete);
+        #endregion
+
+        #region RelateOperators 
+        private static readonly Parser<Operators> ToThisAndAllRelated =
+            from start in Parse.IgnoreCase("ToThisAndAllRelated").Token()
+            select Operators.ToThisAndAllRelated;
+
+        private static readonly Parser<Operators> ToAllRelated =
+            from start in Parse.IgnoreCase("ToAllRelated").Token()
+            select Operators.ToAllRelated;
+        #endregion
+
+        private static readonly Parser<Operators> RelateOperator = ToThisAndAllRelated.Or(ToAllRelated);
+
         private static readonly Parser<char> DoubleQuote = Parse.Char((char)39);
         private static readonly Parser<char> QuotedText = Parse.AnyChar.Except(DoubleQuote);
 
@@ -164,8 +199,14 @@ namespace LangParser
                 Value = text
             };
 
-        private static readonly Parser<Expression> Integer =
+        private static readonly Parser<string> Decimal =
             from open in Parse.Number
+            from _ in Parse.Char(',').Or(Parse.Char('.'))
+            from next in Parse.Number
+            select open + _ + next;
+
+        private static readonly Parser<Expression> Number =
+            from open in Decimal.Or(Parse.Number)
             select new ConststantExpression
             {
                 Value = open
@@ -181,11 +222,18 @@ namespace LangParser
                 PropertyName = propertyName.IsEmpty ? entityName : propertyName.Get()
             };
 
+        public static readonly Parser<Expression> TargetEntity =
+            from entityName in Parse.Identifier(Parse.Letter, Parse.LetterOrDigit) //Parse.AnyChar.Except(Parse.Char('.').Or(Parse.WhiteSpace)).AtLeastOnce().Text()
+            select new Target
+            {
+                EntityName = entityName
+            };
+
 
         private static readonly Parser<Expression> Binary =
             (from left in Target
              from op in Operator
-             from right in Constant.Or(Integer)
+             from right in Constant.Or(Number)
              select new BinaryExpression()
              {
                  @operator = op,
@@ -194,7 +242,7 @@ namespace LangParser
              }).Contained(Parse.Char('('), Parse.Char(')')).Token()
            .Or(from left in Target
                from op in Operator
-               from right in Constant.Or(Integer)
+               from right in Constant.Or(Number)
                select new BinaryExpression()
                {
                    @operator = op,
@@ -211,107 +259,94 @@ namespace LangParser
                  @operator = @operator,
                  Left = left,
                  Right = right
-             }).Contained(Parse.Char('('), Parse.Char(')')).Token()
-            .Or(from left in Binary.Or(Parse.Ref(() => LogicalExpression))
-                from @operator in LogicalOperators
-                from right in Binary.Or(Parse.Ref(() => LogicalExpression))
-                select new BinaryExpression
-                {
-                    @operator = @operator,
-                    Left = left,
-                    Right = right
-                });
+             }).Contained(Parse.Char('('), Parse.Char(')')).Token();
+        //TODO FOR NOW NOT REQUIRED
+        //.Or(from left in Binary.Or(Parse.Ref(() => LogicalExpression))
+        //    from @operator in LogicalOperators
+        //    from right in Binary.Or(Parse.Ref(() => LogicalExpression))
+        //    select new BinaryExpression
+        //    {
+        //        @operator = @operator,
+        //        Left = left,
+        //        Right = right
+        //    });
 
 
-        private static readonly Parser<Expression> Expression = Target.Or(LogicalExpression.Or(Binary));
+        private static readonly Parser<Expression> Expression = TargetEntity.Or(LogicalExpression.Or(Binary));
 
+        /// <summary>
+        ///  Used for the times when a rule starts with an '(' 
+        /// </summary>
+        /// <param name="expression"></param>
+        /// <returns></returns>
         private static Expression ParseExpression(string expression)
         {
-            if (expression.StartsWith('(') && expression.EndsWith(')') || expression.Trim().Split(' ').Length == 1)
+            if (expression.StartsWith("(") && expression.EndsWith(")") || expression.Trim().Split(' ').Length == 1)
             {
                 return Expression.Parse(expression);
             }
             return Expression.Parse(string.Format("({0})", expression));
         }
 
+        private static readonly Parser<Expression> RelateTarget =
+            from entityName in Parse.Identifier(Parse.Letter, Parse.LetterOrDigit)
+            select new Target
+            {
+                EntityName = entityName,
+                PropertyName = null
+            };
+
+        private static readonly Parser<Expression> BinaryAction =
+            from left in Target.Or(Constant)
+            from op in Operator.Or(RelateOperator)
+            from right in Constant.Or(Number).Or(RelateTarget)
+            select new BinaryExpression()
+            {
+                Left = left,
+                @operator = op,
+                Right = right
+            };
+
+        private static readonly Parser<Expression> RelateAction =
+            from left in Binary
+            from op in RelateOperator
+            from right in RelateTarget
+            select new BinaryExpression()
+            {
+                Left = left,
+                @operator = op,
+                Right = right
+            };
+
+        private static readonly Parser<ActionExpression> Action =
+            from command in CommandAction
+            from action in RelateAction.Or(BinaryAction)
+            from _ in Parse.Char(',').Optional()
+            select new ActionExpression()
+            {
+                Command = command,
+                Action = action
+            };
+
+        //Public just for test cases TODO:Return After
+        public static readonly Parser<IEnumerable<ActionExpression>> ActionList =
+            from @do in ActionStartKeyWord
+            from list in Action.AtLeastOnce()
+            select list;
+
+        //Public just for test cases TODO:Return After
         public static readonly Parser<Expression> Trigger =
             from start in Starters
-            from exp in Parse.AnyChar.AtLeastOnce().Text()
+            from exp in Parse.AnyChar.Except(ActionList).AtLeastOnce().Text()
             select ParseExpression(exp);
-
-
-        //public static readonly Parser<Expression> Command
-
-    }
-    
-    public class Target : Expression
-    {
-        public string EntityName { get; set; }
-        public string PropertyName { get; set; }
-
-        public override string ToString()
-        {
-            return $"{EntityName} {PropertyName}";
-        }
-    }
-
-    public class ConststantExpression : Expression
-    {
-        public string Value { get; set; }
-
-        public override string ToString()
-        {
-            return Value;
-        }
-    }
-
-    public class BinaryExpression : Expression
-    {
-        public Expression Left { get; set; }
-        public Operators @operator { get; set; }
-        public Expression Right { get; set; }
-
-
-        public override string ToString()
-        {
-            return $"{Left} {@operator} {Right}";
-        }
-    }
-
-    public abstract class Expression
-    {
-    }
-
-    public enum Operators
-    {
-        //Bi
-        all,
-        contains,
-        starts_with,
-        greater_than,
-        greater_than_or_equal,
-        @is,
-        not_is,
-        less_than,
-        less_than_or_equal,
-        not_contains,
-        @in,
-        EqualToProp,
-        NotEqualToProp,
-
-        //TODO NOT SURE IF CONTAINED
-        ends_with,
-        plus,
-        minus,
-        max,
-        sin,
-        contains_exact_phrase,
-        contains_snippet,
-        contains_alias,
-
-        //LOGICAL OPERATORS
-        and,
-        or
+        
+        public static readonly Parser<Rule> Rule =
+            from target in Trigger
+            from action in ActionList
+            select new Rule()
+            {
+                Target = target,
+                Actions = action.ToList<Expression>()
+            };
     }
 }
-
