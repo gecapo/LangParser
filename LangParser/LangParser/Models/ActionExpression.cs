@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace D6S.Tool.RulesV2.LanguageParser.Models
+namespace LanguageParser.Models
 {
     /// <summary>
     /// Command that will be executed on Target.
