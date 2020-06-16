@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
-using D6S.Tool.RulesV2.LanguageParser.Models;
+using LanguageParser.Models;
 using Sprache;
 
-namespace D6S.Tool.RulesV2.LanguageParser
+namespace LanguageParser
 {
     public static class Grammar
     {
