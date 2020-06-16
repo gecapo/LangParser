@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace D6S.Tool.RulesV2.LanguageParser.Models
+namespace LanguageParser.Models
 {
-    public class Expression
+    public abstract class Expression
     {
     }
 }
